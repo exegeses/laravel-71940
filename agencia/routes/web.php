@@ -50,5 +50,13 @@ Route::get('/vista2', function ()
 {
     return view('vista2');
 });
-/*---- CRUDS */
+
 Route::view('/plantilla', 'plantilla');
+/*---- CRUDS */
+#### CRUD de regiones
+Route::get('/regiones', function ()
+{
+    //Obtenemos listado de regiones
+    $regiones = DB::select('SELECT * FROM regiones');
+    return view('regiones', [ 'regiones'=>$regiones ]);
+});
