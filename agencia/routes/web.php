@@ -50,3 +50,5 @@ Route::get('/vista2', function ()
 {
     return view('vista2');
 });
+/*---- CRUDS */
+Route::view('/plantilla', 'plantilla');
