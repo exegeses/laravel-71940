@@ -5,6 +5,9 @@
 
         <h1 class="text-2xl font-bold">Panel de administración de regiones</h1>
 
+        @if( session('mensaje') )
+            <x-alert></x-alert>
+        @endif
         <table class="w-2/3 mx-auto mt-8">
             <thead>
             <tr>
@@ -36,7 +39,9 @@
             </tbody>
         </table>
 
-
+        <div class="max-w-lg mx-auto sm:px-6 lg:px-8 py-4">
+            {{ $regiones->links() }}
+        </div>
 
     </div>
 </main>

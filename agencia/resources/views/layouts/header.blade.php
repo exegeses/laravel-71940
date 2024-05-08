@@ -7,6 +7,7 @@
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>Agencia Laravel</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.css" rel="stylesheet" />
         <link rel="shortcut icon" href="/imgs/m-iso.png" type="image/x-icon">
         <link rel="stylesheet" href="/css/app.css">
     </head>

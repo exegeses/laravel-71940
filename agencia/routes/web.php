@@ -57,6 +57,48 @@ Route::view('/plantilla', 'plantilla');
 Route::get('/regiones', function ()
 {
     //Obtenemos listado de regiones
-    $regiones = DB::select('SELECT * FROM regiones');
+    //$regiones = DB::select('SELECT * FROM regiones');
+    //$regiones = DB::table('regiones')->get();
+    //paginador
+    $regiones = DB::table('regiones')->paginate(3);
     return view('regiones', [ 'regiones'=>$regiones ]);
+});
+Route::get('/region/create', function ()
+{
+    return view('regionCreate');
+});
+Route::post('/region/store', function ()
+{
+    //capturamos dato enviado por el form
+    //$nombre = request()->post('nombre');
+    //$nombre = request()->input('nombre');
+    //$nombre = request()->nombre;
+    $nombre = request('nombre');
+    try {
+        //insertamos en tabla regiones
+        /* versión raw SQL
+        DB::insert(
+                "INSERT INTO regiones
+                            (nombre)
+                        VALUE
+                            ( :nombre )",
+                [ $nombre ]
+            );
+        */
+        /*### versión Query Builder*/
+        DB::table('regiones')
+                ->insert(['nombre'=>$nombre]);
+        return redirect('/regiones')
+                    ->with([
+                            'css'=>'green',
+                            'mensaje'=>'Región: '.$nombre.' agregada correctamente.'
+                        ]);
+    }catch ( Throwable $th ){
+        //si falla
+        return redirect('/regiones')
+                    ->with([
+                            'css'=>'red',
+                            'mensaje'=>'No se pudo agrergar la región: '.$nombre
+                        ]);
+    }
 });
