@@ -206,6 +206,134 @@ Route::get('/destinos', function ()
                         ->join('regiones AS r',
                                 'd.idRegion','=','r.idRegion'
                                )
-                       ->get();
+                        ->orderBy('idDestino', 'DESC')
+                        ->paginate(8);
     return view('destinos', [ 'destinos'=>$destinos ]);
+});
+Route::get('destino/create', function()
+{
+    $regiones = DB::table('regiones')->get();
+    return view('destinoCreate', ['regiones'=>$regiones]);
+});
+Route::post('/destino/store', function ()
+{
+    $aeropuerto = request()->aeropuerto;
+    $precio = request()->precio;
+    $idRegion = request()->idRegion;
+    try {
+        /* raw SQL
+         * DB::insert(
+                'INSERT INTO destinos
+                    ( aeropuerto, precio, idRegion )
+                   VALUE
+                    ( :aeropuerto, :precio, :idRegion)',
+                    [ $aeropuerto, $precio, $idRegion ]
+        );*/
+        DB::table('destinos')
+            ->insert([
+                'aeropuerto'=>$aeropuerto,
+                'precio'=>$precio,
+                'idRegion'=>$idRegion
+            ]);     /* 'activo'=>1 */
+        return redirect('/destinos')
+            ->with(
+                [
+                    'mensaje'=>'Destino '.$aeropuerto.' agregado correctamente',
+                    'css'=>'green'
+                ]);
+    }
+    catch (Throwable $th){
+        return redirect('/destinos')
+            ->with(
+                [
+                    'mensaje'=>'No se pudo agregar el destino '.$aeropuerto,
+                    'css'=>'red'
+                ]);
+    }
+});
+Route::get('/destino/edit/{id}', function ($id)
+{
+    //listamos las regiones
+    $regiones = DB::table('regiones')
+        ->get();
+    //obtenemos el destino por id
+    $destino = DB::table('destinos as d')
+        ->join('regiones as r','d.idRegion','=','r.idRegion')
+        //->select('d.*','r.*')
+        ->where( 'd.idDestino', $id )
+        ->first();
+
+    //retornamos la vista editar destino
+    return view('destinoEdit',
+        [
+            'regiones' => $regiones,
+            'destino'=>$destino
+        ]
+    );
+});
+Route::post('/destino/update', function ()
+{
+    $aeropuerto = request()->aeropuerto;
+    $precio = request()->precio;
+    $idRegion = request()->idRegion;
+    $idDestino = request()->idDestino;
+    try {
+        DB::table('destinos')
+            ->where('idDestino', $idDestino)
+            ->update([
+                'aeropuerto'=>$aeropuerto,
+                'precio'=>$precio,
+                'idRegion'=>$idRegion
+            ]);
+        return redirect('/destinos')
+            ->with(
+                [
+                    'mensaje'=>'Destino '.$aeropuerto.' agregado correctamente',
+                    'css'=>'green'
+                ]);
+    }
+    catch (Throwable $th){
+        return redirect('/destinos')
+            ->with(
+                [
+                    'mensaje'=>'No se pudo agregar el destino '.$aeropuerto,
+                    'css'=>'red'
+                ]);
+    }
+});
+Route::get('/destino/delete/{id}', function ( $id )
+{
+    $destino = DB::table('destinos as d')
+        ->join('regiones as r','d.idRegion','=','r.idRegion')
+        ->select('d.*','r.nombre')
+        ->where( 'd.idDestino', $id )
+        ->first();
+
+    return view('destinoDelete', [ 'destino' => $destino ]);
+});
+Route::post('/destino/destroy', function ()
+{
+    $idDestino = request()->idDestino;
+    $aeropuerto = request()->aeropuerto;
+    try {
+        //DB::delete('DELETE FROM destinos
+        //              WHERE idDestino = :idDestino', [ $idDestino ]);
+        DB::table('destinos')
+            ->where( 'idDestino', $idDestino )
+            ->delete();
+        return redirect('/destinos')
+            ->with(
+                [
+                    'mensaje'=>'Destino '.$aeropuerto.' eliminado correctamente',
+                    'css'=>'green'
+                ]);
+    }
+    catch (Throwable $th){
+        return redirect('/destinos')
+            ->with(
+                [
+                    'mensaje'=>'No se pudo eliminar el destino '.$aeropuerto,
+                    'css'=>'red'
+                ]);
+    }
 });
