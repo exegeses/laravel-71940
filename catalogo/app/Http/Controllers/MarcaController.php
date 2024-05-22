@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\Marca;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class MarcaController extends Controller
@@ -85,17 +86,62 @@ class MarcaController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $id) : View
     {
-        //
+        //Obtenemos los datos de una marca por su ID
+        //$marca = Marca::where('idMarca', $id)->first();
+        $marca = Marca::find($id);
+        return view('marcaEdit', ['marca'=>$marca]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request)
     {
-        //
+        $mkNombre = $request->mkNombre;
+        $idMarca = $request->idMarca;
+        $this->validarForm($request);
+        try {
+            $marca = Marca::find($idMarca) ; // obtenemos marca por su id
+            $marca->mkNombre = $mkNombre; // asignamos valor a atributo
+            $marca->save();//almacenamos en tabla
+            return redirect('/marcas')
+                ->with(
+                    [
+                        'mensaje'=>'Marca: '.$mkNombre.' modificada correctamente',
+                        'css'=>'green'
+                    ]
+                );
+        }
+        catch ( Throwable $th ){
+            return redirect('/marcas')
+                ->with(
+                    [
+                        'mensaje'=>'No se pudo modificar la marca: '.$mkNombre,
+                        'css'=>'red'
+                    ]
+                );
+        }
+    }
+
+    private function checkProducto( int $idMarca )
+    {
+        // obj || null
+        /* $check = DB::table('productos')
+                        ->where('idMarca', $idMarca)
+                        ->first();*/
+        // int
+        $check = DB::table('productos')
+                        ->where('idMarca', $idMarca)
+                        ->count();
+        return $check;
+    }
+
+    public function delete( string $id )
+    {
+        $marca = Marca::find($id);
+        dd( $this->checkProducto($id) );
     }
 
     /**
