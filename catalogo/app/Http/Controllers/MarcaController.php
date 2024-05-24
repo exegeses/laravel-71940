@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Marca;
+use App\Models\Producto;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -125,12 +126,12 @@ class MarcaController extends Controller
         }
     }
 
-    private function checkProducto( int $idMarca )
+    private function checkProducto( int $idMarca ) : int
     {
         // obj || null
         /* $check = DB::table('productos')
                         ->where('idMarca', $idMarca)
-                        ->first();*/
+                        ->first(); */
         // int
         $check = DB::table('productos')
                         ->where('idMarca', $idMarca)
@@ -138,17 +139,46 @@ class MarcaController extends Controller
         return $check;
     }
 
-    public function delete( string $id )
+    public function delete( string $id ) : RedirectResponse | View
     {
         $marca = Marca::find($id);
-        dd( $this->checkProducto($id) );
+        //dd( $this->checkProducto($id) );
+        // dd( Producto::checkProductoPorMarca($id) );
+        if( Producto::checkProductoPorMarca($id) ){
+            return redirect('/marcas')
+                ->with([
+                    'mensaje'=>'No se pueder eliminar la marca: '.$marca->mkNombre.' porque tiene productos relacionados.',
+                    'css'=>'red'
+                ]);
+        }
+        return view('marcaDelete', [ 'marca'=>$marca ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy( Request $request ) : RedirectResponse
     {
-        //
+        $idMarca = $request->idMarca;
+        $mkNombre = $request->mkNombre;
+        try {
+            Marca::destroy($idMarca);
+            return redirect('/marcas')
+                ->with(
+                    [
+                        'mensaje'=>'Marca: '.$mkNombre.' eliminada correctamente',
+                        'css'=>'green'
+                    ]
+                );
+        }
+        catch ( Throwable $th ){
+            return redirect('/marcas')
+                ->with(
+                    [
+                        'mensaje'=>'No se pudo eliminar la marca: '.$mkNombre,
+                        'css'=>'red'
+                    ]
+                );
+        }
     }
 }
