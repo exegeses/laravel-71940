@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Marca;
 use App\Models\Categoria;
 use App\Models\Producto;
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use App\Http\Requests\ProductoRequest;
+
 
 class ProductoController extends Controller
 {
@@ -41,7 +45,8 @@ class ProductoController extends Controller
     {
         $request->validate(
             [
-                'prdNombre'=>'required|unique:productos,prdNombre|min:2|max:75',
+                //'prdNombre'=>'required|unique:productos,prdNombre|min:2|max:75',
+                'prdNombre'=>'required|'.Rule::unique('productos')->ignore($request->idProducto, 'idProducto').'|min:2|max:75',
                 'prdPrecio'=>'required|numeric|min:0',
                 'idMarca'=>'required|exists:marcas,idMarca',
                 'idCategoria'=>'required|exists:categorias,idCategoria',
@@ -67,14 +72,69 @@ class ProductoController extends Controller
         );
     }
 
+    private function subirImagen( Request $request ) : string
+    {
+        //Si no enviaron una imagen store()
+        $prdImagen = 'noDisponible.svg';
+
+        //si no enviaron imagen update()
+        if( $request->has('imgActual') ){
+            $prdImagen = $request->imgActual;
+        }
+
+        //si enviaron una imagen
+        if( $request->file('prdImagen') ){
+            $file = $request->file('prdImagen');
+            /* Renombramos el archivo enviado */
+            $time = time();
+            $extension = $file->getClientOriginalExtension();
+            $prdImagen = $time.'.'.$extension;
+
+            /* subimos archivo */
+            $file->move(public_path('/imgs/productos'), $prdImagen);
+        }
+
+        return $prdImagen;
+    }
+
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    //public function store(Request $request)
+    public function store(ProductoRequest $request) : RedirectResponse
     {
         $prdNombre = $request->prdNombre;
-        $this->validarForm($request);
-        return 'pasó la validaci´´on';
+        //$this->validarForm($request);
+        $prdImagen = $this->subirImagen( $request );
+        try {
+            $producto = new Producto;
+            //Asignamos atributos
+            $producto->prdNombre = $prdNombre;
+            $producto->prdPrecio = $request->prdPrecio;
+            $producto->idMarca = $request->idMarca;
+            $producto->idCategoria = $request->idCategoria;
+            $producto->prdDescripcion = $request->prdDescripcion;
+            $producto->prdImagen = $prdImagen;
+            //Almacenamos en la tabla productos
+            $producto->save();
+            return redirect('/productos')
+                ->with(
+                    [
+                        'mensaje' => 'Producto: ' . $prdNombre . ' agregado correctamente',
+                        'css' => 'green'
+                    ]
+                );
+        }
+        catch ( Throwable $th ){
+            //log  $th->getMessage()
+            return redirect('/productos')
+                ->with(
+                    [
+                        'mensaje'=>'No se pudo agregar el producto: '.$prdNombre.'.',
+                        'css'=>'red'
+                    ]
+                );
+        }
     }
 
     /**
@@ -88,17 +148,57 @@ class ProductoController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Producto $producto)
+    public function edit(Producto $producto) : View
     {
-        //
+        $marcas = Marca::all();
+        $categorias = Categoria::all();
+        return view('productoEdit',
+                [
+                    'marcas'=>$marcas,
+                    'categorias'=>$categorias,
+                    'producto'=>$producto
+                ]
+        );
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Producto $producto)
+    //public function update(Request $request)
+    public function update(ProductoRequest $request) : RedirectResponse
     {
-        //
+        $prdNombre = $request->prdNombre;
+        //$this->validarForm($request);
+        $prdImagen = $this->subirImagen( $request );
+        try {
+            $producto = Producto::find($request->idProducto);
+            //Asignamos atributos
+            $producto->prdNombre = $prdNombre;
+            $producto->prdPrecio = $request->prdPrecio;
+            $producto->idMarca = $request->idMarca;
+            $producto->idCategoria = $request->idCategoria;
+            $producto->prdDescripcion = $request->prdDescripcion;
+            $producto->prdImagen = $prdImagen;
+            //Almacenamos en tabla productos
+            $producto->save();
+
+            return redirect('/productos')
+                ->with(
+                    [
+                        'mensaje'=>'Producto: '.$prdNombre.' modificado correctamente',
+                        'css'=>'green'
+                    ]
+                );
+        }catch ( Throwable $th ){
+            //log  $th->getMessage()
+            return redirect('/productos')
+                ->with(
+                    [
+                        'mensaje'=>'No se pudo modificar el producto: '.$prdNombre.'.',
+                        'css'=>'red'
+                    ]
+                );
+        }
     }
 
     /**
